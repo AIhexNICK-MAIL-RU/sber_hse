@@ -8,3 +8,5 @@
 1.png
 
 
+__pycache__/
+*.pyc
