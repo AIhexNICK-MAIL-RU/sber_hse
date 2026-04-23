@@ -1,0 +1,25 @@
+services:
+  workflow-copilot-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workflow-copilot-api
+    ports:
+      - "8000:8000"
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    depends_on:
+      - workflow-copilot-api
+    ports:
+      - "3000:8080"
+    environment:
+      - OPENAI_API_BASE_URL=http://workflow-copilot-api:8000/v1
+      - OPENAI_API_KEY=dummy-key
+    volumes:
+      - open-webui-data:/app/backend/data
+
+volumes:
+  open-webui-data:
+

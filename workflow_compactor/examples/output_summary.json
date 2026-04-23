@@ -1,0 +1,58 @@
+{
+  "flow": {
+    "id": "flow_demo",
+    "name": "Demo flow",
+    "version": "cir.v1"
+  },
+  "shape": {
+    "nodes": 3,
+    "edges": 2,
+    "entry_nodes": [
+      "n1"
+    ],
+    "terminal_nodes": [
+      "n3"
+    ],
+    "branch_count": 1
+  },
+  "composition": {
+    "kinds": {
+      "source_text": 1,
+      "conditional_router": 1,
+      "sink_text": 1
+    },
+    "roles": {
+      "source": 1,
+      "router": 1,
+      "sink": 1
+    }
+  },
+  "execution_outline": [
+    {
+      "node_id": "n1",
+      "kind": "source_text",
+      "role": "source",
+      "critical_params": {
+        "path": "calls"
+      }
+    },
+    {
+      "node_id": "n2",
+      "kind": "conditional_router",
+      "role": "router",
+      "critical_params": {
+        "condition": "contains(cat)"
+      }
+    },
+    {
+      "node_id": "n3",
+      "kind": "sink_text",
+      "role": "sink",
+      "critical_params": {
+        "format": "json"
+      }
+    }
+  ],
+  "integrity_hash": "sha256:59b0514fe0db0876ada3980282d2d60a34f008913c27956e9572f6cf0279aeb9",
+  "warnings": []
+}

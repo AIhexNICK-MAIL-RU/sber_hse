@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "issue_count": 0,
+  "issues": [],
+  "warnings": [],
+  "metrics": {
+    "source_chars": 611,
+    "compact_chars": 1283,
+    "size_reduction_ratio": 2.0998,
+    "node_count": 3,
+    "edge_count": 2,
+    "branch_count": 1
+  }
+}

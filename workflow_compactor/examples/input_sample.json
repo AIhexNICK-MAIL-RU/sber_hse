@@ -1,0 +1,72 @@
+{
+  "id": "flow_demo",
+  "name": "Demo flow",
+  "data": {
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "ChatInput",
+        "data": {
+          "fields": {
+            "path": "calls"
+          }
+        },
+        "outputs": [
+          {
+            "name": "text"
+          }
+        ]
+      },
+      {
+        "id": "n2",
+        "type": "IfElse",
+        "data": {
+          "fields": {
+            "condition": "contains(cat)"
+          }
+        },
+        "inputs": [
+          {
+            "name": "text"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "true"
+          },
+          {
+            "name": "false"
+          }
+        ]
+      },
+      {
+        "id": "n3",
+        "type": "ChatOutput",
+        "data": {
+          "fields": {
+            "format": "json"
+          }
+        },
+        "inputs": [
+          {
+            "name": "text"
+          }
+        ]
+      }
+    ],
+    "edges": [
+      {
+        "source": "n1",
+        "sourceHandle": "text",
+        "target": "n2",
+        "targetHandle": "text"
+      },
+      {
+        "source": "n2",
+        "sourceHandle": "true",
+        "target": "n3",
+        "targetHandle": "text"
+      }
+    ]
+  }
+}

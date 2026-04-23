@@ -1,0 +1,117 @@
+{
+  "flow_id": "flow_demo",
+  "flow_name": "Demo flow",
+  "version": "cir.v1",
+  "nodes": [
+    {
+      "id": "n1",
+      "kind": "source_text",
+      "role": "source",
+      "params": {
+        "path": "calls"
+      },
+      "io": {
+        "inputs": [],
+        "outputs": [
+          "text"
+        ]
+      },
+      "flags": {
+        "is_conditional": false,
+        "is_terminal": false
+      },
+      "origin_type": "ChatInput"
+    },
+    {
+      "id": "n2",
+      "kind": "conditional_router",
+      "role": "router",
+      "params": {
+        "condition": "contains(cat)"
+      },
+      "io": {
+        "inputs": [
+          "text"
+        ],
+        "outputs": [
+          "false",
+          "true"
+        ]
+      },
+      "flags": {
+        "is_conditional": true,
+        "is_terminal": false
+      },
+      "origin_type": "IfElse"
+    },
+    {
+      "id": "n3",
+      "kind": "sink_text",
+      "role": "sink",
+      "params": {
+        "format": "json"
+      },
+      "io": {
+        "inputs": [
+          "text"
+        ],
+        "outputs": []
+      },
+      "flags": {
+        "is_conditional": false,
+        "is_terminal": true
+      },
+      "origin_type": "ChatOutput"
+    }
+  ],
+  "edges": [
+    {
+      "from": {
+        "node": "n1",
+        "port": "text"
+      },
+      "to": {
+        "node": "n2",
+        "port": "text"
+      },
+      "semantics": "data"
+    },
+    {
+      "from": {
+        "node": "n2",
+        "port": "true"
+      },
+      "to": {
+        "node": "n3",
+        "port": "text"
+      },
+      "semantics": "data"
+    }
+  ],
+  "control": {
+    "entry_nodes": [
+      "n1"
+    ],
+    "terminal_nodes": [
+      "n3"
+    ],
+    "branches": [
+      {
+        "router_node": "n2",
+        "cases": [
+          {
+            "when": "true",
+            "target_node": "n3"
+          }
+        ],
+        "default_target": null
+      }
+    ]
+  },
+  "integrity": {
+    "node_count": 3,
+    "edge_count": 2,
+    "hash": "sha256:59b0514fe0db0876ada3980282d2d60a34f008913c27956e9572f6cf0279aeb9"
+  },
+  "warnings": []
+}
