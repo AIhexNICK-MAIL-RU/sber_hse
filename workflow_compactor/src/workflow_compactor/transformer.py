@@ -11,6 +11,7 @@ from .extractor import (
     extract_edges,
     extract_flow_meta,
     extract_node_identity,
+    extract_node_description,
     extract_node_params,
     extract_node_ports,
     extract_nodes,
@@ -88,12 +89,14 @@ def compact_workflow(payload: dict[str, Any]) -> CompactIR:
         kind = normalize_kind(raw_type)
         role = infer_role(kind)
         params = normalize_params(extract_node_params(raw_node))
+        description = extract_node_description(raw_node)
         inputs, outputs = extract_node_ports(raw_node)
 
         node = Node(
             node_id=node_id,
             kind=kind,
             role=role,
+            description=description,
             params=params,
             inputs=inputs,
             outputs=outputs,

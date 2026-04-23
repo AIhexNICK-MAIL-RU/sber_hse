@@ -6,7 +6,11 @@ from typing import Any
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from .copilot import generate_copilot_response
+from .component_retrieval import search_component_cards
+from .copilot import generate_agent_response, generate_copilot_response
+from .flow_assembler import assemble_flow_from_spec_text
+from .summary import build_summary_packet
+from .transformer import compact_workflow
 
 app = FastAPI(title="Workflow Copilot API", version="0.1.0")
 
@@ -21,6 +25,20 @@ class ChatCompletionRequest(BaseModel):
     messages: list[ChatMessage]
     stream: bool = False
     temperature: float | None = None
+
+
+class AgentRequest(BaseModel):
+    query: str = Field(min_length=1)
+    workflow_json: dict[str, Any] | None = None
+
+
+class AssembleFromSpecRequest(BaseModel):
+    spec: str = Field(min_length=1, description="Compact flow spec for lfx build_flow_from_spec")
+
+
+class ComponentSearchRequest(BaseModel):
+    query: str = Field(min_length=1)
+    top_k: int = Field(default=20, ge=1, le=80)
 
 
 @app.get("/health")
@@ -81,6 +99,34 @@ def chat_completions(request: ChatCompletionRequest) -> dict[str, Any]:
             "completion_tokens": max(1, len(answer) // 4),
             "total_tokens": max(2, (len(user_query) + len(answer)) // 4),
         },
+    }
+
+
+@app.post("/v1/components/search")
+def components_search(request: ComponentSearchRequest) -> dict[str, Any]:
+    """BM25 over component_index cards (names + descriptions, no full templates)."""
+    hits = search_component_cards(request.query, top_k=request.top_k)
+    return {"query": request.query, "count": len(hits), "components": hits}
+
+
+@app.post("/v1/workflow/assemble-from-spec")
+def workflow_assemble_from_spec(request: AssembleFromSpecRequest) -> dict[str, Any]:
+    """Turn a compact spec into full Langflow flow JSON (requires lfx on PYTHONPATH)."""
+    return assemble_flow_from_spec_text(request.spec)
+
+
+@app.post("/v1/agent/query")
+def agent_query(request: AgentRequest) -> dict[str, Any]:
+    workflow_context = None
+    if request.workflow_json:
+        ir = compact_workflow(request.workflow_json)
+        workflow_context = build_summary_packet(ir)
+    answer = generate_agent_response(request.query, workflow_context)
+    return {
+        "query": request.query,
+        "answer": answer,
+        "has_workflow_context": workflow_context is not None,
+        "workflow_context": workflow_context,
     }
 
 

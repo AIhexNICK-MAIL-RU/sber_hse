@@ -29,6 +29,7 @@ class Node:
     node_id: str
     kind: str
     role: str
+    description: str = ""
     params: dict[str, Any] = field(default_factory=dict)
     inputs: list[str] = field(default_factory=list)
     outputs: list[str] = field(default_factory=list)
@@ -41,6 +42,7 @@ class Node:
             "id": self.node_id,
             "kind": self.kind,
             "role": self.role,
+            "description": self.description,
             "params": self.params,
             "io": {"inputs": self.inputs, "outputs": self.outputs},
             "flags": {
