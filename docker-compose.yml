@@ -1,5 +1,5 @@
 services:
-  copilot-api:
+  app:
     build:
       context: ./workflow_compactor
       dockerfile: Dockerfile
