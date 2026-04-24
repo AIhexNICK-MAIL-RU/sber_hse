@@ -69,6 +69,8 @@ docker compose -f docker-compose.openwebui.yml up --build
 For cloud platforms with different autodetect rules, minimal API-only compose
 files are provided with all common names:
 `docker-compose.yml`, `docker-compose.yaml`, and `compose.yaml`.
+Static `container_name` is intentionally omitted to avoid conflicts across
+redeploys in shared Docker hosts.
 
 Then open:
 

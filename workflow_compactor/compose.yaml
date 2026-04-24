@@ -3,7 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: workflow-copilot-api
     ports:
       - "8000:8000"
     restart: unless-stopped

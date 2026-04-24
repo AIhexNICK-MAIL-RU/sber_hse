@@ -3,13 +3,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: workflow-copilot-api
     ports:
       - "8000:8000"
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
     depends_on:
       - workflow-copilot-api
     ports:
