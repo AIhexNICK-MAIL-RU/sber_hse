@@ -6,13 +6,6 @@ from typing import Any
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 
-from .component_retrieval import search_component_cards
-from .copilot import generate_agent_response, generate_copilot_response
-from .flow_assembler import assemble_flow_from_spec_text
-from .planning_engine import make_plan_packet
-from .summary import build_summary_packet
-from .transformer import compact_workflow
-
 app = FastAPI(title="Workflow Copilot API", version="0.1.0")
 
 
@@ -100,6 +93,8 @@ def _extract_user_text(messages: list[ChatMessage]) -> str:
 
 @app.post("/v1/chat/completions")
 def chat_completions(request: ChatCompletionRequest) -> dict[str, Any]:
+    from .copilot import generate_copilot_response
+
     user_query = _extract_user_text(request.messages)
     answer = generate_copilot_response(user_query)
     now = int(time.time())
@@ -126,6 +121,8 @@ def chat_completions(request: ChatCompletionRequest) -> dict[str, Any]:
 @app.post("/v1/components/search")
 def components_search(request: ComponentSearchRequest) -> dict[str, Any]:
     """BM25 over component_index cards (names + descriptions, no full templates)."""
+    from .component_retrieval import search_component_cards
+
     hits = search_component_cards(request.query, top_k=request.top_k)
     return {"query": request.query, "count": len(hits), "components": hits}
 
@@ -133,12 +130,16 @@ def components_search(request: ComponentSearchRequest) -> dict[str, Any]:
 @app.post("/v1/workflow/assemble-from-spec")
 def workflow_assemble_from_spec(request: AssembleFromSpecRequest) -> dict[str, Any]:
     """Turn a compact spec into full Langflow flow JSON (requires lfx on PYTHONPATH)."""
+    from .flow_assembler import assemble_flow_from_spec_text
+
     return assemble_flow_from_spec_text(request.spec)
 
 
 @app.post("/v1/copilot/plan")
 def copilot_plan(request: PlanRequest) -> dict[str, Any]:
     """Create Task Card + feasibility gate + planning outline from user query."""
+    from .planning_engine import make_plan_packet
+
     packet = make_plan_packet(request.query)
     return {"query": request.query, **packet}
 
@@ -146,6 +147,9 @@ def copilot_plan(request: PlanRequest) -> dict[str, Any]:
 @app.post("/v1/workflow/assemble-approved")
 def workflow_assemble_approved(request: ApprovedAssembleRequest) -> dict[str, Any]:
     """Compile to execution JSON only after explicit user approval."""
+    from .flow_assembler import assemble_flow_from_spec_text
+    from .planning_engine import make_plan_packet
+
     if not request.approved:
         return {
             "ok": False,
@@ -159,6 +163,10 @@ def workflow_assemble_approved(request: ApprovedAssembleRequest) -> dict[str, An
 
 @app.post("/v1/agent/query")
 def agent_query(request: AgentRequest) -> dict[str, Any]:
+    from .copilot import generate_agent_response
+    from .summary import build_summary_packet
+    from .transformer import compact_workflow
+
     workflow_context = None
     if request.workflow_json:
         ir = compact_workflow(request.workflow_json)
