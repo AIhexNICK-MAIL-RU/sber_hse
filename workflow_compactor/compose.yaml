@@ -1,5 +1,5 @@
 services:
-  workflow-copilot-api:
+  copilot-api:
     build:
       context: .
       dockerfile: Dockerfile

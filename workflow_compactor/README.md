@@ -79,7 +79,7 @@ Then open:
 - Agent endpoint: `POST http://localhost:8000/v1/agent/query`
 
 OpenWebUI is preconfigured to use the local OpenAI-compatible endpoint:
-`http://workflow-copilot-api:8000/v1`.
+`http://copilot-api:8000/v1`.
 
 ### If Docker build has slow PyPI/network access
 
