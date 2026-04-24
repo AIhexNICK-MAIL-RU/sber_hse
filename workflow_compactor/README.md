@@ -66,8 +66,9 @@ From `workflow_compactor/` (all-in-docker):
 docker compose -f docker-compose.openwebui.yml up --build
 ```
 
-For cloud platforms that auto-detect only `docker-compose.yml`, this file is
-now provided as a minimal API-only stack (`workflow-copilot-api` on port 8000).
+For cloud platforms with different autodetect rules, minimal API-only compose
+files are provided with all common names:
+`docker-compose.yml`, `docker-compose.yaml`, and `compose.yaml`.
 
 Then open:
 
