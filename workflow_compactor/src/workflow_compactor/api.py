@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 from .component_retrieval import search_component_cards
 from .copilot import generate_agent_response, generate_copilot_response
 from .flow_assembler import assemble_flow_from_spec_text
+from .planning_engine import make_plan_packet
 from .summary import build_summary_packet
 from .transformer import compact_workflow
 
@@ -34,6 +35,16 @@ class AgentRequest(BaseModel):
 
 class AssembleFromSpecRequest(BaseModel):
     spec: str = Field(min_length=1, description="Compact flow spec for lfx build_flow_from_spec")
+
+
+class PlanRequest(BaseModel):
+    query: str = Field(min_length=1)
+
+
+class ApprovedAssembleRequest(BaseModel):
+    query: str = Field(min_length=1)
+    spec: str = Field(min_length=1)
+    approved: bool = Field(default=False)
 
 
 class ComponentSearchRequest(BaseModel):
@@ -113,6 +124,27 @@ def components_search(request: ComponentSearchRequest) -> dict[str, Any]:
 def workflow_assemble_from_spec(request: AssembleFromSpecRequest) -> dict[str, Any]:
     """Turn a compact spec into full Langflow flow JSON (requires lfx on PYTHONPATH)."""
     return assemble_flow_from_spec_text(request.spec)
+
+
+@app.post("/v1/copilot/plan")
+def copilot_plan(request: PlanRequest) -> dict[str, Any]:
+    """Create Task Card + feasibility gate + planning outline from user query."""
+    packet = make_plan_packet(request.query)
+    return {"query": request.query, **packet}
+
+
+@app.post("/v1/workflow/assemble-approved")
+def workflow_assemble_approved(request: ApprovedAssembleRequest) -> dict[str, Any]:
+    """Compile to execution JSON only after explicit user approval."""
+    if not request.approved:
+        return {
+            "ok": False,
+            "error": "approval_required",
+            "details": "Set approved=true to compile execution JSON.",
+            "plan": make_plan_packet(request.query),
+        }
+    result = assemble_flow_from_spec_text(request.spec)
+    return {"ok": "error" not in result, "plan": make_plan_packet(request.query), "result": result}
 
 
 @app.post("/v1/agent/query")

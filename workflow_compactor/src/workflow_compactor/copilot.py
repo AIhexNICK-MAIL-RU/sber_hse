@@ -2,14 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-
-def _intent(query: str) -> str:
-    q = query.lower()
-    if any(token in q for token in ("объясни", "что такое", "чем отличается", "как работает")):
-        return "consult"
-    if any(token in q for token in ("измени", "добавь", "замени", "оптимизируй", "исправь")):
-        return "edit"
-    return "design"
+from .planning_engine import make_plan_packet
 
 
 def _build_component_draft(query: str) -> list[str]:
@@ -30,12 +23,39 @@ def _build_component_draft(query: str) -> list[str]:
 
 
 def generate_copilot_response(query: str) -> str:
-    intent = _intent(query)
+    packet = make_plan_packet(query)
+    intent = packet["intent"]
     draft = "\n".join(f"- {step}" for step in _build_component_draft(query))
+    task_card = packet["task_card"]
+    feasibility = packet["feasibility"]
+    questions = packet["clarification_questions"]
+    stop_policy = packet["hard_stop_policy"]
 
-    if intent == "consult":
+    card_lines = (
+        f"- Goal: {task_card.get('goal', '')}\n"
+        f"- Inputs: {', '.join(task_card.get('inputs', [])) or 'не определены'}\n"
+        f"- Expected Result: {task_card.get('expected_result', 'не определен')}\n"
+        f"- Constraints: {', '.join(task_card.get('constraints', [])) or 'нет'}\n"
+        f"- External Context: {', '.join(task_card.get('external_context', [])) or 'нет'}"
+    )
+
+    if not feasibility.get("ready", False) and intent in {"build", "edit"}:
+        questions_text = "\n".join(f"- {q}" for q in questions) or "- Уточните входные параметры."
         return (
-            "### Режим: консультация\n"
+            f"### Режим: {intent}\n"
+            "Недостаточно данных для сборки/редактирования workflow.\n\n"
+            "**Task Card (черновик):**\n"
+            f"{card_lines}\n\n"
+            "**Что критически отсутствует:**\n"
+            f"- {', '.join(feasibility.get('missing', []))}\n\n"
+            "**Пакет уточнений (одним блоком):**\n"
+            f"{questions_text}\n\n"
+            "После ответов покажу planning plan и попрошу approve перед сборкой execution JSON."
+        )
+
+    if intent == "explain":
+        return (
+            "### Режим: explain\n"
             "Понял, что сейчас важнее объяснение, а не автосборка графа.\n\n"
             "Что делает copilot:\n"
             "- интерпретирует задачу на естественном языке;\n"
@@ -71,11 +91,23 @@ def generate_copilot_response(query: str) -> str:
         "  C.text_output -> D.input_value\n"
     )
     return (
-        "### Режим: проектирование\n"
-        "Собираю **граф** (несколько узлов + рёбра), а не один JSON-компонент.\n\n"
+        f"### Режим: {intent}\n"
+        "Собираю **план графа** (несколько узлов + рёбра), а не один JSON-компонент.\n\n"
         f"**Что понял:** {query}\n\n"
+        "**Task Card:**\n"
+        f"{card_lines}\n\n"
+        "**Feasibility Gate:**\n"
+        f"- ready: {feasibility.get('ready', False)}\n"
+        f"- missing: {', '.join(feasibility.get('missing', [])) or 'нет'}\n\n"
         "**Черновой pipeline (логика):**\n"
         f"{draft}\n\n"
+        "**Approve policy:**\n"
+        "- Сначала показываю planning outline и параметры.\n"
+        "- Сборка execution JSON только после подтверждения пользователя.\n\n"
+        "**Hard stop policy:**\n"
+        f"- max_repair_iterations: {stop_policy.get('max_repair_iterations')}\n"
+        f"- max_total_seconds: {stop_policy.get('max_total_seconds')}\n"
+        f"- fallback: {stop_policy.get('fallback')}\n\n"
         "**Формат для сборщика Langflow (lfx ``build_flow_from_spec``):**\n"
         "Модель должна выдать **только** такой текстовый spec; затем бэкенд подставляет "
         "шаблоны из ``component_index.json`` и получает полный flow с ``data.nodes`` и ``data.edges``.\n\n"
